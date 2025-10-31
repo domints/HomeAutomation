@@ -1,1 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0@sha256:bf48e8b328707fae0e63a1b7d764d770221def59b97468c8cdee68f4e38ddfb9
+
+WORKDIR /App
+
+COPY ./out /App/
+
+ENTRYPOINT ["dotnet", "HomeAutomation.dll"]
