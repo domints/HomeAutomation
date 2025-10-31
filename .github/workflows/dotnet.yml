@@ -39,10 +39,10 @@ jobs:
     #     username: "${{ vars.DOCKER_USER }}"
     #     password: "${{ secrets.DOCKER_PASS }}"
     - name: Build and Docker image
-      run: docker buildx build -t ${{ vars.DOCKER_IMAGE }}:latest -t ${{ vars.DOCKER_IMAGE }}:${{ github.sha }} --provenance=false .
+      run: docker build -t ${{ vars.DOCKER_IMAGE }}:latest -t ${{ vars.DOCKER_IMAGE }}:${{ github.sha }} --provenance=false .
     - name: Login to Docker
       run: docker login -u "${{ vars.DOCKER_USER }}" -p "${{ secrets.DOCKER_PASS }}" "${{ vars.DOCKER_REGISTRY }}"
     - name: Push image as hash
-      run: docker push ${{ vars.DOCKER_IMAGE }}:${{ github.sha }}
+      run: docker push "${{ vars.DOCKER_IMAGE }}:${{ github.sha }}"
     - name: Push image as latest
-      run: docker push ${{ vars.DOCKER_IMAGE }}:latest
+      run: docker push "${{ vars.DOCKER_IMAGE }}:latest"
