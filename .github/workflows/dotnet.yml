@@ -21,11 +21,11 @@ jobs:
       with:
         dotnet-version: 9.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore -c Release
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build -c Release --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test -c Release --no-build --verbosity normal
     - name: Publish
       run: dotnet publish src/HomeAutomation.csproj --no-build -c Release -o ./out
     - name: dbg
