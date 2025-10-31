@@ -1,6 +1,8 @@
 using MQTTnet;
 using src;
 using src.Config;
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Configuration.AddJsonFile("secrets.json", true);
@@ -9,6 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton<IHomeStateProvider, HomeStateProvider>();
 builder.Services.AddSingleton<IMQTTHandler, MQTTHandler>();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 var mqttFactory = new MqttClientFactory();
 var mqttConfig = builder.Configuration.GetRequiredSection("MQTT").Get<MQTTConfig>() ?? throw new Exception("MQTT config missing");
