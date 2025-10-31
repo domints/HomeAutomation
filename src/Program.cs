@@ -43,6 +43,17 @@ var mqttHandler = app.Services.GetRequiredService<IMQTTHandler>();
 mqttClient.ApplicationMessageReceivedAsync += mqttHandler.Handle;
 await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
 
+app.MapGet("/", (HttpContext cx, IMqttClient client, IHomeStateProvider homeState) =>
+{
+    return new
+    {
+        Connected = client.IsConnected,
+        Lights = homeState.LightRelays,
+        CorridorLastAction = homeState.CorridorLastPressAction,
+        BedroomLastAction = homeState.BedroomLastPressAction
+    };
+});
+
 app.Run();
 
 if (mqttClient.IsConnected)
