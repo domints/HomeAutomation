@@ -3,14 +3,23 @@ using src;
 using src.Config;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
+using Telegram.Bot;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Configuration.AddJsonFile("secrets.json", true);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.Configure<TelegramConfig>(builder.Configuration.GetSection("Telegram"));
 builder.Services.AddSingleton<IHomeStateProvider, HomeStateProvider>();
 builder.Services.AddSingleton<IMQTTHandler, MQTTHandler>();
+builder.Services.AddSingleton((IServiceProvider sp) =>
+{
+    var cfg = sp.GetRequiredService<IOptions<TelegramConfig>>();
+    return new TelegramBotClient(cfg.Value.Token!);
+});
+builder.Services.AddScoped<IBot, BotWrapper>();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -60,7 +69,8 @@ app.MapGet("/", (HttpContext cx, IMqttClient client, IHomeStateProvider homeStat
         Connected = client.IsConnected,
         Lights = homeState.LightRelays,
         CorridorLastAction = homeState.CorridorLastPressAction,
-        BedroomLastAction = homeState.BedroomLastPressAction
+        BedroomLastAction = homeState.BedroomLastPressAction,
+        DoorOpened = homeState.DoorOpened
     };
 });
 

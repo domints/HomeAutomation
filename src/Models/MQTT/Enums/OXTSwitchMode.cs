@@ -11,6 +11,8 @@ namespace src.Models.MQTT.Enums
         Toggle,
         [EnumMember(Value = "momentary")]
         Momentary,
+        [EnumMember(Value = "momentary_nc")]
+        MomentaryNC,
         [EnumMember(Value = "multifunction")]
         Multifunction
     }

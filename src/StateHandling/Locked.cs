@@ -38,6 +38,5 @@ namespace src
         {
             return Value?.ToString() ?? "NULL";
         }
-
     }
 }

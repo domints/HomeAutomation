@@ -29,12 +29,17 @@ namespace src.MqttMessageHandlers
             if (_homeStateProvider.CorridorLastPressAction != Models.MQTT.Enums.OXTPressAction.LongPress && switchState.SwitchPressActionSwitch == Models.MQTT.Enums.OXTPressAction.LongPress)
             {
                 _homeStateProvider.CorridorLastPressAction = switchState.SwitchPressActionSwitch;
+                _homeStateProvider.CorridorLongPressed.Value = true;
 
                 var allLights = _homeStateProvider.LightRelays;
                 foreach (var light in allLights)
                 {
                     await _mqttClient.PublishStringAsync($"zigbee2mqtt/{light}/set", "OFF");
                 }
+            }
+            else if (switchState.SwitchPressActionSwitch == Models.MQTT.Enums.OXTPressAction.Press)
+            {
+                _homeStateProvider.CorridorLongPressed.Value = false;
             }
 
             _homeStateProvider.CorridorLastPressAction = switchState.SwitchPressActionSwitch;
