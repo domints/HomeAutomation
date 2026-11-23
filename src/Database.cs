@@ -32,7 +32,7 @@ namespace src
         private void Initialize()
         {
             using var createCallsTableCmd = _connection.CreateCommand();
-            createCallsTableCmd.CommandText = "CREATE TABLE IF NOT EXISTS calls (number INTEGER, time INTEGER);";
+            createCallsTableCmd.CommandText = "CREATE TABLE IF NOT EXISTS calls (number INTEGER, timestamp INTEGER, state TEXT, duration INTEGER);";
             createCallsTableCmd.ExecuteNonQuery();
         }
 

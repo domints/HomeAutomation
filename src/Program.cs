@@ -80,15 +80,17 @@ app.MapGet("/calls", async (IDatabase db) =>
 {
     var rows = await db.WorkAsync(async (conn) =>
     {
-        var results = new List<(int number, long timestamp)>();
+        var results = new List<(int number, long timestamp, string state, int duration)>();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT number, time FROM calls;";
+        cmd.CommandText = "SELECT number, timestamp, state, duration FROM calls;";
         using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             int n = reader.GetInt16(0);
             long t = reader.GetInt64(1);
-            results.Add((n, t));
+            string s = reader.GetString(2);
+            int d = reader.GetInt32(3);
+            results.Add((n, t, s, d));
         }
 
         return results;
@@ -108,6 +110,10 @@ app.MapGet("/calls", async (IDatabase db) =>
         rowBuilder.Append(row.number);
         rowBuilder.Append("</td><td>");
         rowBuilder.Append(toDate(row.timestamp).ToString("yyyy-MM-dd HH:mm:ss"));
+        rowBuilder.Append("</td><td>");
+        rowBuilder.Append(row.state);
+        rowBuilder.Append("</td><td>");
+        rowBuilder.Append(row.state == "code" ? null : row.duration);
         rowBuilder.Append("</td></tr>");
     }
 
@@ -117,9 +123,11 @@ app.MapGet("/calls", async (IDatabase db) =>
     <link href=""https://cdn.jsdelivr.net/npm/bootstrap@6.0.0-alpha.1/dist/css/bootstrap.min.css"" rel=""stylesheet"" integrity=""sha384-B/GM4XqrwHnWXNOWMbloTmrYXZg10cakYGmpfsR/bbzQ6JAJI4ihuyADKLnBgrCe"" crossorigin=""anonymous"">
     </head>
     <body>
+    <div class=""container"">
     <table class=""table"">
     {rowBuilder}
     </table>
+    </div>
     </body>
     </html>");
 });
