@@ -29,9 +29,12 @@ namespace src.MqttMessageHandlers
                 {
                     foreach (var endpoint in dev.Endpoints.Values)
                     {
-                        if (endpoint.Name != null && endpoint.Name.StartsWith("relay"))
+                        if (endpoint.Clusters != null && endpoint.Clusters.Input.Any(c => c == "genOnOff"))
                         {
-                            lightEndpoints.Add($"{dev.FriendlyName}/{endpoint.Name}");
+                            if (!string.IsNullOrWhiteSpace(endpoint.Name))
+                                lightEndpoints.Add($"{dev.FriendlyName}/{endpoint.Name}");
+                            else 
+                                lightEndpoints.Add($"{dev.FriendlyName}");
                         }
                     }
                 }

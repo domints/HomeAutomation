@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using Telegram.Bot;
 using Microsoft.Extensions.Options;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 //builder.Configuration.AddJsonFile("secrets.json", true);
@@ -12,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.Configure<TelegramConfig>(builder.Configuration.GetSection("Telegram"));
+builder.Services.AddSingleton<IDatabase, SqliteDatabase>();
 builder.Services.AddSingleton<IHomeStateProvider, HomeStateProvider>();
 builder.Services.AddSingleton<IMQTTHandler, MQTTHandler>();
 builder.Services.AddSingleton((IServiceProvider sp) =>
@@ -53,7 +55,7 @@ mqttClient.DisconnectedAsync += async e =>
 
 mqttClient.ConnectedAsync += async e =>
 {
-    var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder().WithTopicFilter("zigbee2mqtt/#").Build();
+    var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder().WithTopicFilter("#").Build();
     await mqttClient.SubscribeAsync(mqttSubscribeOptions);
 };
 
@@ -72,6 +74,54 @@ app.MapGet("/", (HttpContext cx, IMqttClient client, IHomeStateProvider homeStat
         BedroomLastAction = homeState.BedroomLastPressAction,
         DoorOpened = homeState.DoorOpened
     };
+});
+
+app.MapGet("/calls", async (IDatabase db) =>
+{
+    var rows = await db.WorkAsync(async (conn) =>
+    {
+        var results = new List<(int number, long timestamp)>();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT number, time FROM calls;";
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            int n = reader.GetInt16(0);
+            long t = reader.GetInt64(1);
+            results.Add((n, t));
+        }
+
+        return results;
+    });
+
+    var toDate = (long timestamp) =>
+    {
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        dateTime = dateTime.AddSeconds(timestamp).ToLocalTime();
+        return dateTime;
+    };
+
+    var rowBuilder = new StringBuilder();
+    foreach (var row in rows)
+    {
+        rowBuilder.Append("<tr><td>");
+        rowBuilder.Append(row.number);
+        rowBuilder.Append("</td><td>");
+        rowBuilder.Append(toDate(row.timestamp).ToString("yyyy-MM-dd HH:mm:ss"));
+        rowBuilder.Append("</td></tr>");
+    }
+
+    return Results.Extensions.Html(@$"
+    <html>
+    <head>
+    <link href=""https://cdn.jsdelivr.net/npm/bootstrap@6.0.0-alpha.1/dist/css/bootstrap.min.css"" rel=""stylesheet"" integrity=""sha384-B/GM4XqrwHnWXNOWMbloTmrYXZg10cakYGmpfsR/bbzQ6JAJI4ihuyADKLnBgrCe"" crossorigin=""anonymous"">
+    </head>
+    <body>
+    <table class=""table"">
+    {rowBuilder}
+    </table>
+    </body>
+    </html>");
 });
 
 app.Run();
